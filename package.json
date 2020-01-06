@@ -10,6 +10,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@mapbox/mapbox-sdk": "^0.9.0",
+    "@react-native-mapbox-gl/maps": "^7.0.8",
     "react": "16.9.0",
     "react-native": "0.61.5"
   },
