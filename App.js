@@ -31,7 +31,7 @@ const directionsClient = MapboxDirectionsFactory({accessToken});
 Icon.loadFont();
 MapboxGL.setAccessToken(accessToken);
 
-// user center coordinate
+// Coordinates
 const UserLocation = [2.374400000000037, 48.9052]; // [longitude, latitude]
 const DestinationLocation = [2.3488, 48.8534]; // [longitude, latitude]
 const StartLocation = UserLocation;

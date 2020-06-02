@@ -7,10 +7,14 @@ Exemple of MapBox Direction with React Native
 ### yarn start
 
 # What you need to add :
-const accessToken = 'YOUR_ACCESS_TOKEN'; // put your access token here
+```
+const accessToken = 'YOUR-MAPBOX-KEY-HERE'; // Put your Key 
+...
 
-const UserLocation = []; // [longitude, latitude] Coord of the location where you want to put the user
+// Coordinates
+const UserLocation = [2.374400000000037, 48.9052]; // [longitude, latitude] // change by what you want thoses are my default test coordinate
+const DestinationLocation = [2.3488, 48.8534]; // [longitude, latitude] // change by what you want thoses are my default test coordinate
 
-const StartLocation = UserLocation; // by default userLocation but you can put different coord here
-
-const DestinationLocation = []; // [longitude, latitude] Coord of your destination
+const StartLocation = UserLocation; // change if u need by an array of coords
+const CenterCoordinate = UserLocation; // change if u need by an array of coords
+```
