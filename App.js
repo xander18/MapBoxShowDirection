@@ -25,7 +25,7 @@ import MapboxDirectionsFactory from '@mapbox/mapbox-sdk/services/directions';
 import PulseCircleLayer from './PulseCircleLayer';
 import CenteringButtonMap from './CenteringButtonMap';
 
-const accessToken = 'pk.eyJ1IjoieGFuZGVyMTgiLCJhIjoiY2pwcHB3amJlMGt0ODQ4bzFkd3prdmtoaSJ9.z2NEzy6ihQ9KsoIkPCzMKQ';
+const accessToken = 'YOUR-MAPBOX-KEY-HERE';
 const directionsClient = MapboxDirectionsFactory({accessToken});
 
 Icon.loadFont();
@@ -33,8 +33,9 @@ MapboxGL.setAccessToken(accessToken);
 
 // user center coordinate
 const UserLocation = [2.374400000000037, 48.9052]; // [longitude, latitude]
-const DestinationLocation = [2.3488, 48.8534]; //
+const DestinationLocation = [2.3488, 48.8534]; // [longitude, latitude]
 const StartLocation = UserLocation;
+const CenterCoordinate = UserLocation;
 
 const App: () => React$Node = () => {
   let [userLocation, setUserLocation] = useState(UserLocation);
@@ -149,10 +150,10 @@ const App: () => React$Node = () => {
               zoomLevel={14}
               animationMode="flyTo"
               animationDuration={0}
-              centerCoordinate={userLocation}
+              centerCoordinate={CenterCoordinate}
               followUserLocation={false}
               defaultSettings={{
-                centerCoordinate: userLocation,
+                centerCoordinate: CenterCoordinate,
                 followUserLocation: false,
                 followUserMode: 'normal',
               }}
