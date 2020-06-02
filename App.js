@@ -25,7 +25,7 @@ import MapboxDirectionsFactory from '@mapbox/mapbox-sdk/services/directions';
 import PulseCircleLayer from './PulseCircleLayer';
 import CenteringButtonMap from './CenteringButtonMap';
 
-const accessToken = 'YOUR-MAPBOX-KEY-HERE';
+const accessToken = 'pk.eyJ1IjoieGFuZGVyMTgiLCJhIjoiY2pwcHB3amJlMGt0ODQ4bzFkd3prdmtoaSJ9.z2NEzy6ihQ9KsoIkPCzMKQ';
 const directionsClient = MapboxDirectionsFactory({accessToken});
 
 Icon.loadFont();
@@ -145,7 +145,6 @@ const App: () => React$Node = () => {
             onDidFinishRenderingMapFully={() => setLoading(false)}
             zoomLevel={14}
             style={styles.flex}>
-            <CenteringButtonMap onPress={() => centeringButtonPress()} />
             <MapboxGL.Camera
               zoomLevel={14}
               animationMode="flyTo"
@@ -165,11 +164,12 @@ const App: () => React$Node = () => {
                 onUserLocationUpdate(newUserLocation)
               }
             />
-            {renderActions()}
             {renderRoute()}
             {renderDestinationPoint()}
             {renderStart()}
           </MapboxGL.MapView>
+          {renderActions()}
+          <CenteringButtonMap onPress={() => centeringButtonPress()} />
         </View>
       </SafeAreaView>
     </>
@@ -199,6 +199,7 @@ const styles = StyleSheet.create({
     right: 10,
     top: 20,
     width: 100,
+    height: 100,
     zIndex: 200,
   },
   text: {
