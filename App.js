@@ -25,7 +25,7 @@ import MapboxDirectionsFactory from '@mapbox/mapbox-sdk/services/directions';
 import PulseCircleLayer from './PulseCircleLayer';
 import CenteringButtonMap from './CenteringButtonMap';
 
-const accessToken = 'pk.eyJ1IjoieGFuZGVyMTgiLCJhIjoiY2pwcHB3amJlMGt0ODQ4bzFkd3prdmtoaSJ9.z2NEzy6ihQ9KsoIkPCzMKQ';
+const accessToken = 'YOUR-MAPBOX-KEY';
 const directionsClient = MapboxDirectionsFactory({accessToken});
 
 Icon.loadFont();
