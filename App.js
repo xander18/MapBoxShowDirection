@@ -13,6 +13,8 @@ import {
   View,
   Text,
   StatusBar,
+  ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -21,25 +23,24 @@ import {lineString as makeLineString} from '@turf/helpers';
 import MapboxDirectionsFactory from '@mapbox/mapbox-sdk/services/directions';
 
 import PulseCircleLayer from './PulseCircleLayer';
-import RouteSimulator from './RouteSimulator';
 import CenteringButtonMap from './CenteringButtonMap';
 
-const accessToken = 'YOUR_ACCESS_TOKEN';
+const accessToken = 'pk.eyJ1IjoieGFuZGVyMTgiLCJhIjoiY2pwcHB3amJlMGt0ODQ4bzFkd3prdmtoaSJ9.z2NEzy6ihQ9KsoIkPCzMKQ';
 const directionsClient = MapboxDirectionsFactory({accessToken});
 
 Icon.loadFont();
 MapboxGL.setAccessToken(accessToken);
 
 // user center coordinate
-const UserLocation = []; // [longitude, latitude]
+const UserLocation = [2.374400000000037, 48.9052]; // [longitude, latitude]
+const DestinationLocation = [2.3488, 48.8534]; //
 const StartLocation = UserLocation;
-const DestinationLocation = []; //
 
 const App: () => React$Node = () => {
   let [userLocation, setUserLocation] = useState(UserLocation);
   let [route, setRoute] = useState(null);
-  let [currentPoint, setCurrentPoint] = useState(null);
-  let [routeSimulator, setRouteSimulator] = useState(null);
+  let [started, setStarted] = useState(false);
+  let [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchRoute = async () => {
@@ -55,11 +56,8 @@ const App: () => React$Node = () => {
       const newRoute = makeLineString(res.body.routes[0].geometry.coordinates);
       setRoute(newRoute);
     };
-    fetchRoute();
-    if (routeSimulator) {
-      return routeSimulator.stop();
-    }
-  }, [routeSimulator]);
+    started && fetchRoute();
+  }, [started]);
 
   // Action to center the map on user position
   const centeringButtonPress = () => {
@@ -75,56 +73,41 @@ const App: () => React$Node = () => {
     ]);
   };
 
-  // Simulate the path to follow
-  const onStart = () => {
-    const newRouteSimulator = new RouteSimulator(route);
-    newRouteSimulator.addListener(points => setCurrentPoint(points));
-    newRouteSimulator.start();
-    setRouteSimulator(newRouteSimulator);
+  const onStop = () => {
+    setRoute(null);
+    setStarted(false);
   };
 
-  // Render progressive Line
-  const renderProgressLine = () => {
-    if (!currentPoint) {
-      return null;
-    }
-
-    const {nearestIndex} = currentPoint.properties;
-    const coords = route.geometry.coordinates.filter(
-      (c, i) => i <= nearestIndex,
-    );
-    coords.push(currentPoint.geometry.coordinates);
-
-    if (coords.length < 2) {
-      return null;
-    }
-
-    const lineString = makeLineString(coords);
-    return (
-      <MapboxGL.Animated.ShapeSource id="progressSource" shape={lineString}>
-        <MapboxGL.Animated.LineLayer
-          id="progressFill"
-          style={layerStyles.progress}
-          aboveLayerID="routeFill"
-        />
-      </MapboxGL.Animated.ShapeSource>
-    );
+  const renderDestinationPoint = () => {
+    return DestinationLocation && DestinationLocation.length > 0 && started ? (
+      <MapboxGL.PointAnnotation
+        id="destination"
+        title="destination location"
+        coordinate={DestinationLocation}>
+        <View style={styles.circle}>
+          <View style={styles.innerCircle}>
+            <View style={styles.dotCircle} />
+          </View>
+        </View>
+      </MapboxGL.PointAnnotation>
+    ) : null;
   };
 
-  // Render the point that follow the path
-  const renderCurrentPoint = () => {
-    if (!currentPoint) {
-      return;
-    }
-    return (
-      <PulseCircleLayer
-        shape={currentPoint}
-        aboveLayerID="destinationInnerCircle"
-      />
-    );
+  const renderStart = () => {
+    return StartLocation.length > 0 && started ? (
+      <MapboxGL.PointAnnotation
+        id="start"
+        title="start location"
+        coordinate={StartLocation}>
+        <View style={styles.circle}>
+          <View style={styles.innerCircle}>
+            <View style={styles.dotCircle} />
+          </View>
+        </View>
+      </MapboxGL.PointAnnotation>
+    ) : null;
   };
 
-  // render the Route
   const renderRoute = () => {
     return route ? (
       <MapboxGL.ShapeSource id="routeSource" shape={route}>
@@ -134,50 +117,45 @@ const App: () => React$Node = () => {
   };
 
   // Start Button
-  const renderActions = () => {
-    return !routeSimulator ? (
-      <View style={styles.startRouteButton}>
-        <Text style={styles.text} onPress={() => onStart()}>
-          Start Direction
-        </Text>
-      </View>
-    ) : null;
-  };
-
-  // start point
-  const renderOrigin = () => {
-    let backgroundColor = 'white';
-
-    if (currentPoint) {
-      backgroundColor = '#1D1D1D';
-    }
-
-    const style = [layerStyles.origin, {circleColor: backgroundColor}];
-
-    return (
-      <MapboxGL.ShapeSource
-        id="origin"
-        shape={MapboxGL.geoUtils.makePoint(DestinationLocation)}>
-        <MapboxGL.Animated.CircleLayer id="originInnerCircle" style={style} />
-      </MapboxGL.ShapeSource>
-    );
-  };
+  const renderActions = () => (
+    <TouchableOpacity
+      style={styles.startRouteButton}
+      onPress={() => !started ? setStarted(true) : onStop()}>
+      <Text style={styles.text}>
+        {!started ? 'Start' : 'Stop'}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <>
+      {loading && (
+        <View style={styles.loader}>
+          <ActivityIndicator size="small" color="#fff" />
+        </View>
+      )}
       <StatusBar barStyle="dark-content" />
       <SafeAreaView style={styles.container}>
         <View style={styles.flex}>
           <MapboxGL.MapView
             logoEnabled={false}
-            styleURL={MapboxGL.StyleURL.Light}
+            compassEnabled={false}
+            zoomEnabled={true}
+            onDidFinishRenderingMapFully={() => setLoading(false)}
             zoomLevel={14}
-            centerCoordinate={UserLocation}
             style={styles.flex}>
             <CenteringButtonMap onPress={() => centeringButtonPress()} />
             <MapboxGL.Camera
               zoomLevel={14}
+              animationMode="flyTo"
+              animationDuration={0}
               centerCoordinate={userLocation}
+              followUserLocation={false}
+              defaultSettings={{
+                centerCoordinate: userLocation,
+                followUserLocation: false,
+                followUserMode: 'normal',
+              }}
               ref={camera => (_camera = camera)}
             />
             <MapboxGL.UserLocation
@@ -187,18 +165,9 @@ const App: () => React$Node = () => {
               }
             />
             {renderActions()}
-            {renderOrigin()}
             {renderRoute()}
-            {renderCurrentPoint()}
-            {renderProgressLine()}
-            <MapboxGL.ShapeSource
-              id="destination"
-              shape={MapboxGL.geoUtils.makePoint(DestinationLocation)}>
-              <MapboxGL.CircleLayer
-                id="destinationInnerCircle"
-                style={layerStyles.destination}
-              />
-            </MapboxGL.ShapeSource>
+            {renderDestinationPoint()}
+            {renderStart()}
           </MapboxGL.MapView>
         </View>
       </SafeAreaView>
@@ -213,12 +182,23 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
+  loader: {
+    position: 'absolute',
+    backgroundColor: 'rgba(0,0,0, .5)',
+    height: '100%',
+    width: '100%',
+    zIndex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   startRouteButton: {
     alignItems: 'center',
     flexDirection: 'row',
     position: 'absolute',
     right: 10,
     top: 20,
+    width: 100,
+    zIndex: 200,
   },
   text: {
     position: 'absolute',
@@ -229,26 +209,36 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     overflow: 'hidden',
   },
+  circle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(68, 154, 235, .4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  innerCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#1D1D1D',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dotCircle: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'rgba(68, 154, 235, 1)',
+  },
 });
 
 const layerStyles = {
-  origin: {
-    circleRadius: 5,
-    circleColor: 'white',
-  },
-  destination: {
-    circleRadius: 5,
-    circleColor: 'red',
-  },
   route: {
     lineColor: '#1D1D1D',
     lineCap: MapboxGL.LineJoin.Round,
     lineWidth: 3,
     lineOpacity: 0.84,
-  },
-  progress: {
-    lineColor: '#1D1D1D',
-    lineWidth: 3,
   },
 };
 
